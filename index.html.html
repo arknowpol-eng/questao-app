@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f4f1eb">
+  <title>Questão | Gerenciador de estudos</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root { --ink: #242827; --muted: #7d827c; --paper: #f7f5f0; --panel: #fffefa; --line: #e8e6df; --sage: #9eb59b; --sage-dark: #56715e; --sage-pale: #e7efe5; --coral: #d47f6e; --shadow: 0 18px 50px rgba(42, 48, 42, .06); }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; color: var(--ink); background: var(--paper); font-family: 'DM Sans', sans-serif; font-size: 14px; }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .app-shell { min-height: 100vh; display: flex; }
+    .sidebar { width: 248px; min-height: 100vh; padding: 34px 24px 25px; background: #26312d; color: #f4f1e9; display: flex; flex-direction: column; }
+    .brand { display: flex; align-items: center; gap: 11px; margin: 0 10px 72px; }
+    .brand-mark { width: 34px; height: 34px; border-radius: 50%; background: var(--sage); color: #23322b; display: grid; place-items: center; font: 800 19px Syne, sans-serif; }
+    .brand strong { display: block; font: 700 20px Syne, sans-serif; letter-spacing: -.8px; }
+    .brand span { display: block; color: #9faa9e; font-size: 9px; letter-spacing: 1.3px; text-transform: uppercase; margin-top: 2px; }
+    .side-nav { display: grid; gap: 8px; }
+    .nav-item { text-decoration: none; color: #aeb8ae; padding: 12px 13px; border-radius: 8px; display: flex; align-items: center; gap: 12px; transition: .2s ease; }
+    .nav-item:hover, .nav-item.active { background: rgba(183, 207, 179, .14); color: #fff; }
+    .nav-item.active { box-shadow: inset 3px 0 var(--sage); }
+    .nav-icon { color: var(--sage); width: 17px; text-align: center; font-size: 17px; }
+    .sidebar-note { margin-top: auto; padding: 20px 15px; border: 1px solid rgba(173, 200, 169, .15); border-radius: 10px; background: rgba(255, 255, 255, .04); }
+    .note-kicker { display: block; color: var(--sage); font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 12px; }
+    .sidebar-note strong { display: block; line-height: 1.35; font: 600 16px Syne, sans-serif; margin-bottom: 10px; }
+    .sidebar-note span:last-child { display: block; color: #aeb8ae; font-size: 12px; line-height: 1.5; }
+    .sidebar-footer { display: flex; gap: 8px; align-items: center; margin-top: 22px; color: #86938a; font-size: 10px; line-height: 1.4; }
+    .status-dot, .footer-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--sage); display: inline-block; flex: 0 0 auto; }
+    .main-content { width: min(100%, 1380px); padding: 48px 5.5% 29px; margin: 0 auto; }
+    .topbar { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 37px; }
+    .eyebrow { color: var(--sage-dark); font-size: 10px; font-weight: 700; letter-spacing: 1.6px; margin: 0 0 10px; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1, h2, h3 { font-family: Syne, sans-serif; }
+    h1 { font-size: clamp(26px, 3vw, 36px); letter-spacing: -1.6px; margin-bottom: 8px; }
+    .subtitle { color: var(--muted); margin: 0; font-size: 14px; }
+    .today-label { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; padding-top: 9px; }
+    .calendar-icon { display: grid; place-items: center; width: 22px; height: 22px; border: 1px solid #c6c9c1; border-radius: 5px; font-size: 13px; }
+    .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 30px; }
+    .metric-card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 19px 21px 18px; min-height: 135px; box-shadow: var(--shadow); }
+    .metric-primary { background: var(--sage); border-color: var(--sage); color: #26382e; }
+    .metric-topline { display: flex; align-items: center; justify-content: space-between; }
+    .metric-label { color: var(--muted); font-size: 9px; letter-spacing: 1.2px; font-weight: 700; }
+    .metric-primary .metric-label { color: #55705d; }
+    .metric-symbol { color: var(--sage-dark); font-size: 17px; }
+    .metric-primary .metric-symbol { color: #52735b; }
+    .metric-symbol.green, .green-text { color: #6d9a6b; }
+    .metric-symbol.coral, .coral-text { color: var(--coral); }
+    .metric-value { display: block; font: 700 35px Syne, sans-serif; letter-spacing: -1.5px; margin: 17px 0 3px; }
+    .metric-helper { color: var(--muted); font-size: 11px; }
+    .metric-primary .metric-helper { color: #4c6a55; }
+    .workspace-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 22px; align-items: start; }
+    .section-panel { border: 1px solid var(--line); background: var(--panel); border-radius: 10px; box-shadow: var(--shadow); }
+    .subjects-panel { min-width: 0; padding: 29px 29px 0; }
+    .panel-heading { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 23px; }
+    h2 { font-size: 20px; letter-spacing: -.8px; margin: 0; }
+    .ghost-button { color: var(--muted); background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 8px 11px; font-size: 11px; transition: .2s ease; }
+    .ghost-button:hover { border-color: var(--coral); color: var(--coral); }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 570px; }
+    th { color: #a0a49e; font-size: 9px; font-weight: 700; letter-spacing: 1px; text-align: left; padding: 0 12px 12px; border-bottom: 1px solid var(--line); text-transform: uppercase; }
+    th:first-child, td:first-child { padding-left: 0; }
+    th:last-child, td:last-child { padding-right: 0; }
+    td { padding: 17px 12px; border-bottom: 1px solid #efeee9; color: #5e655f; font-size: 12px; }
+    .subject-cell { display: flex; align-items: center; gap: 10px; color: var(--ink); font-weight: 600; }
+    .subject-badge { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 7px; background: var(--sage-pale); color: var(--sage-dark); font-weight: 700; font-size: 12px; }
+    .number-cell { color: var(--ink); font-weight: 600; }
+    .correct-value { color: #6a936b; font-weight: 600; }
+    .error-value { color: var(--coral); font-weight: 600; }
+    .rate-wrap { display: flex; align-items: center; gap: 9px; min-width: 120px; }
+    .rate-bar { width: 58px; height: 5px; border-radius: 10px; background: #ecece6; overflow: hidden; }
+    .rate-fill { height: 100%; background: var(--sage-dark); border-radius: inherit; }
+    .rate-text { color: var(--sage-dark); font-size: 11px; font-weight: 700; }
+    .delete-row { color: #b2b6ae; background: transparent; border: 0; font-size: 16px; opacity: 0; transition: .2s; }
+    tr:hover .delete-row { opacity: 1; }
+    .delete-row:hover { color: var(--coral); }
+    .empty-state { display: none; text-align: center; padding: 40px 20px 37px; }
+    .empty-state.visible { display: block; }
+    .empty-mark { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; color: var(--sage-dark); background: var(--sage-pale); font-size: 23px; margin: 0 auto 13px; }
+    .empty-state h3 { font-size: 16px; margin-bottom: 6px; }
+    .empty-state p { color: var(--muted); font-size: 12px; margin: 0; }
+    .table-total { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--line); margin-top: 8px; padding: 18px 0 20px; color: var(--muted); font-size: 12px; }
+    .table-total strong { color: var(--ink); font: 700 18px Syne, sans-serif; }
+    .add-panel { padding: 27px 25px 25px; background: #f1f0e9; }
+    .add-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
+    .add-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 8px; background: var(--sage); color: #304235; font-size: 22px; }
+    .add-heading .eyebrow { margin-bottom: 5px; }
+    .add-heading h2 { font-size: 18px; }
+    .form-intro { color: var(--muted); font-size: 12px; line-height: 1.5; margin-bottom: 23px; }
+    form label { display: block; color: #666d65; font-size: 11px; font-weight: 600; margin: 0 0 7px; }
+    input { width: 100%; border: 1px solid #dadbd2; border-radius: 6px; background: #fffefa; color: var(--ink); outline: none; padding: 11px 12px; margin-bottom: 16px; font-size: 12px; transition: .2s; }
+    input:focus { border-color: var(--sage-dark); box-shadow: 0 0 0 3px rgba(120, 153, 121, .12); }
+    input::placeholder { color: #b5b8b0; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+    input[readonly] { background: #e8e8df; color: #757b74; }
+    .form-hint { color: #8b9088; font-size: 10px; margin: -3px 0 18px; }
+    .primary-button { width: 100%; display: flex; justify-content: space-between; align-items: center; border: 0; border-radius: 6px; background: var(--sage-dark); color: #fff; padding: 12px 14px; font-size: 12px; font-weight: 600; transition: .2s ease; }
+    .primary-button:hover { background: #405c48; transform: translateY(-1px); }
+    .main-footer { display: flex; justify-content: space-between; color: #9da29b; font-size: 10px; margin-top: 31px; }
+    .main-footer span { display: flex; gap: 7px; align-items: center; }
+    @media (max-width: 980px) { .sidebar { width: 205px; } .main-content { padding-left: 4%; padding-right: 4%; } .metrics-grid { grid-template-columns: repeat(2, 1fr); } .workspace-grid { grid-template-columns: 1fr; } .add-panel { order: -1; } }
+    @media (max-width: 650px) { .app-shell { display: block; } .sidebar { width: 100%; min-height: auto; padding: 16px 18px; display: block; } .brand { margin: 0 0 16px; } .side-nav { display: flex; gap: 5px; } .nav-item { padding: 8px 10px; font-size: 12px; } .sidebar-note, .sidebar-footer { display: none; } .main-content { padding: 29px 16px 22px; } .topbar { margin-bottom: 27px; display: block; } .today-label { padding-top: 17px; } .metrics-grid { gap: 9px; margin-bottom: 20px; } .metric-card { min-height: 116px; padding: 15px 14px; } .metric-value { font-size: 28px; margin-top: 14px; } .subjects-panel { padding: 22px 17px 0; } .panel-heading { gap: 12px; } .panel-heading h2 { font-size: 18px; } .ghost-button { white-space: nowrap; } .main-footer { gap: 12px; flex-direction: column; } }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">Q</div>
+        <div>
+          <strong>questão</strong>
+          <span>ritmo de aprovação</span>
+        </div>
+      </div>
+
+      <nav class="side-nav" aria-label="Navegação principal">
+        <a class="nav-item active" href="#dashboard"><span class="nav-icon">◈</span>Visão geral</a>
+        <a class="nav-item" href="#materias"><span class="nav-icon">▤</span>Minhas matérias</a>
+      </nav>
+
+      <div class="sidebar-note">
+        <span class="note-kicker">Foco de hoje</span>
+        <strong>Consistência vence intensidade.</strong>
+        <span>Registre cada sessão e acompanhe seu avanço.</span>
+      </div>
+
+      <div class="sidebar-footer">
+        <span class="status-dot"></span>
+        Seus dados ficam salvos neste dispositivo
+      </div>
+    </aside>
+
+    <main class="main-content" id="dashboard">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">PAINEL DE DESEMPENHO</p>
+          <h1>Olá, vamos estudar?</h1>
+          <p class="subtitle">Registre suas questões e transforme prática em aprovação.</p>
+        </div>
+        <div class="today-label">
+          <span class="calendar-icon">□</span>
+          <span id="current-date">Hoje</span>
+        </div>
+      </header>
+
+      <section class="metrics-grid" aria-label="Resumo geral">
+        <article class="metric-card metric-primary">
+          <div class="metric-topline"><span class="metric-label">QUESTÕES FEITAS</span><span class="metric-symbol">✦</span></div>
+          <strong class="metric-value" id="total-questions">0</strong>
+          <span class="metric-helper">em todas as matérias</span>
+        </article>
+        <article class="metric-card">
+          <div class="metric-topline"><span class="metric-label">ACERTOS</span><span class="metric-symbol green">↗</span></div>
+          <strong class="metric-value" id="total-correct">0</strong>
+          <span class="metric-helper"><span class="green-text" id="overall-rate">0%</span> de aproveitamento</span>
+        </article>
+        <article class="metric-card">
+          <div class="metric-topline"><span class="metric-label">ERROS</span><span class="metric-symbol coral">↘</span></div>
+          <strong class="metric-value" id="total-errors">0</strong>
+          <span class="metric-helper"><span class="coral-text" id="error-rate">0%</span> do total</span>
+        </article>
+        <article class="metric-card metric-goal">
+          <div class="metric-topline"><span class="metric-label">MATÉRIAS ATIVAS</span><span class="metric-symbol">●</span></div>
+          <strong class="metric-value" id="subject-count">0</strong>
+          <span class="metric-helper">acompanhadas por você</span>
+        </article>
+      </section>
+
+      <section class="workspace-grid">
+        <div class="section-panel subjects-panel" id="materias">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">ACOMPANHAMENTO</p>
+              <h2>Desempenho por matéria</h2>
+            </div>
+            <button class="ghost-button" id="clear-all" type="button" title="Limpar todas as matérias">Limpar tudo</button>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Matéria</th>
+                  <th>Questões</th>
+                  <th>Acertos</th>
+                  <th>Erros</th>
+                  <th>Aproveitamento</th>
+                  <th aria-label="Ações"></th>
+                </tr>
+              </thead>
+              <tbody id="subjects-list"></tbody>
+            </table>
+            <div class="empty-state" id="empty-state">
+              <div class="empty-mark">＋</div>
+              <h3>Seu histórico começa aqui</h3>
+              <p>Adicione uma matéria ao lado para visualizar seu desempenho.</p>
+            </div>
+          </div>
+
+          <div class="table-total">
+            <span>Total de questões já feitas</span>
+            <strong id="footer-total">0</strong>
+          </div>
+        </div>
+
+        <aside class="section-panel add-panel">
+          <div class="add-heading">
+            <div class="add-icon">＋</div>
+            <div>
+              <p class="eyebrow">NOVA SESSÃO</p>
+              <h2>Registrar questões</h2>
+            </div>
+          </div>
+          <p class="form-intro">Adicione os resultados de uma matéria para manter seu painel atualizado.</p>
+
+          <form id="question-form">
+            <label for="subject">Matéria</label>
+            <input id="subject" name="subject" type="text" placeholder="Ex.: Direito Constitucional" maxlength="42" required>
+
+            <label for="questions">Questões feitas</label>
+            <input id="questions" name="questions" type="number" min="1" step="1" placeholder="0" required>
+
+            <div class="form-row">
+              <div>
+                <label for="correct">Acertos</label>
+                <input id="correct" name="correct" type="number" min="0" step="1" placeholder="0" required>
+              </div>
+              <div>
+                <label for="errors">Erros</label>
+                <input id="errors" name="errors" type="number" min="0" step="1" placeholder="0" readonly>
+              </div>
+            </div>
+
+            <div class="form-hint" id="form-hint">Os erros são calculados automaticamente.</div>
+            <button class="primary-button" type="submit"><span>Adicionar ao painel</span><span>→</span></button>
+          </form>
+        </aside>
+      </section>
+
+      <footer class="main-footer">
+        <span><span class="footer-dot"></span> Painel atualizado agora</span>
+        <span>Feito para estudar melhor, todos os dias.</span>
+      </footer>
+    </main>
+  </div>
+  <script>
+    const storageKey = 'questao-dashboard-subjects';
+    function loadSubjects() {
+      try {
+        const savedSubjects = localStorage.getItem(storageKey);
+        return savedSubjects ? JSON.parse(savedSubjects) : [];
+      } catch (error) { return []; }
+    }
+    let subjects = loadSubjects();
+    const form = document.querySelector('#question-form');
+    const subjectInput = document.querySelector('#subject');
+    const questionsInput = document.querySelector('#questions');
+    const correctInput = document.querySelector('#correct');
+    const errorsInput = document.querySelector('#errors');
+    const subjectsList = document.querySelector('#subjects-list');
+    const emptyState = document.querySelector('#empty-state');
+    function formatNumber(value) { return new Intl.NumberFormat('pt-BR').format(value); }
+    function initials(name) { return name.trim().split(/\s+/).slice(0, 2).map((word) => word[0]).join('').toUpperCase(); }
+    function saveSubjects() {
+      try { localStorage.setItem(storageKey, JSON.stringify(subjects)); }
+      catch (error) { document.querySelector('#form-hint').textContent = 'Não foi possível salvar neste dispositivo.'; }
+    }
+    function render() {
+      const totals = subjects.reduce((summary, item) => ({ questions: summary.questions + item.questions, correct: summary.correct + item.correct, errors: summary.errors + item.errors }), { questions: 0, correct: 0, errors: 0 });
+      const overallRate = totals.questions ? Math.round((totals.correct / totals.questions) * 100) : 0;
+      const errorRate = totals.questions ? Math.round((totals.errors / totals.questions) * 100) : 0;
+      document.querySelector('#total-questions').textContent = formatNumber(totals.questions);
+      document.querySelector('#total-correct').textContent = formatNumber(totals.correct);
+      document.querySelector('#total-errors').textContent = formatNumber(totals.errors);
+      document.querySelector('#overall-rate').textContent = `${overallRate}%`;
+      document.querySelector('#error-rate').textContent = `${errorRate}%`;
+      document.querySelector('#subject-count').textContent = formatNumber(subjects.length);
+      document.querySelector('#footer-total').textContent = formatNumber(totals.questions);
+      subjectsList.innerHTML = subjects.map((item, index) => {
+        const rate = item.questions ? Math.round((item.correct / item.questions) * 100) : 0;
+        return `<tr><td><div class="subject-cell"><span class="subject-badge">${initials(item.subject)}</span><span>${item.subject}</span></div></td><td class="number-cell">${formatNumber(item.questions)}</td><td class="correct-value">${formatNumber(item.correct)}</td><td class="error-value">${formatNumber(item.errors)}</td><td><div class="rate-wrap"><span class="rate-bar"><span class="rate-fill" style="width: ${rate}%"></span></span><span class="rate-text">${rate}%</span></div></td><td><button class="delete-row" type="button" data-index="${index}" aria-label="Remover ${item.subject}" title="Remover matéria">×</button></td></tr>`;
+      }).join('');
+      emptyState.classList.toggle('visible', subjects.length === 0);
+    }
+    function updateErrors() {
+      const questions = Number(questionsInput.value) || 0;
+      const correct = Number(correctInput.value) || 0;
+      errorsInput.value = questions ? Math.max(questions - correct, 0) : '';
+      correctInput.setCustomValidity(correct > questions ? 'Os acertos não podem superar as questões feitas.' : '');
+    }
+    form.addEventListener('submit', (event) => {
+      event.preventDefault(); updateErrors(); if (!form.reportValidity()) return;
+      const subject = subjectInput.value.trim(); const questions = Number(questionsInput.value); const correct = Number(correctInput.value); const errors = questions - correct;
+      const existing = subjects.find((item) => item.subject.toLowerCase() === subject.toLowerCase());
+      if (existing) { existing.questions += questions; existing.correct += correct; existing.errors += errors; }
+      else { subjects.push({ subject, questions, correct, errors }); }
+      saveSubjects(); render(); form.reset(); errorsInput.value = ''; subjectInput.focus();
+    });
+    [questionsInput, correctInput].forEach((input) => input.addEventListener('input', updateErrors));
+    subjectsList.addEventListener('click', (event) => {
+      const button = event.target.closest('.delete-row'); if (!button) return;
+      subjects.splice(Number(button.dataset.index), 1); saveSubjects(); render();
+    });
+    document.querySelector('#clear-all').addEventListener('click', () => {
+      if (!subjects.length) return;
+      if (window.confirm('Remover todas as matérias e resultados?')) { subjects = []; saveSubjects(); render(); }
+    });
+    document.querySelector('#current-date').textContent = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
+    window.addEventListener('storage', (event) => { if (event.key !== storageKey) return; subjects = loadSubjects(); render(); });
+    render();
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+    }
+  </script>
+</body>
+</html>
